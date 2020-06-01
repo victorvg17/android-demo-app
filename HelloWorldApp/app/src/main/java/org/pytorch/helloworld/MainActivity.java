@@ -34,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
       // creating bitmap from packaged into app android asset 'image.jpg',
       // app/src/main/assets/image.jpg
       bitmap = BitmapFactory.decodeStream(getAssets().open("image.jpg"));
+      bitmap = Bitmap.createScaledBitmap(bitmap, 224, 224, true);
+      Log.i("PytorchHelloWorld", "size of inputTensor: " + bitmap.getHeight() + ", " + bitmap.getWidth());
       // loading serialized torchscript module from packaged into app android asset model.pt,
       // app/src/model/assets/model.pt
       module = Module.load(assetFilePath(this, "model.pt"));
@@ -48,13 +50,19 @@ public class MainActivity extends AppCompatActivity {
 
     // preparing input tensor
     final Tensor inputTensor = TensorImageUtils.bitmapToFloat32Tensor(bitmap,
-        TensorImageUtils.TORCHVISION_NORM_MEAN_RGB, TensorImageUtils.TORCHVISION_NORM_STD_RGB);
+            TensorImageUtils.TORCHVISION_NORM_MEAN_RGB, TensorImageUtils.TORCHVISION_NORM_STD_RGB);
+    long[] inputTensorShape = inputTensor.shape();
+    Log.i("PytorchHelloWorld", "inputTensor lenght: " + inputTensorShape.length
+            + ", " + inputTensorShape[0] + " " + inputTensorShape[1]
+            + " " + inputTensorShape[2]);
 
     // running the model
     final Tensor outputTensor = module.forward(IValue.from(inputTensor)).toTensor();
+    Log.i("PytorchHelloWorld", "size of outputTensor: " + outputTensor.shape());
 
     // getting tensor content as java array of floats
     final float[] scores = outputTensor.getDataAsFloatArray();
+    Log.i("PytorchHelloWorld", "size of scores array: " + scores.length);
 
     // searching for the index with maximum score
     float maxScore = -Float.MAX_VALUE;
@@ -66,11 +74,18 @@ public class MainActivity extends AppCompatActivity {
       }
     }
 
-    String className = ImageNetClasses.IMAGENET_CLASSES[maxScoreIdx];
+//    String className = ImageNetClasses.IMAGENET_CLASSES[maxScoreIdx];
+    String[] cancerClasses = {"im_Dyskeratotic",
+            "im_Koilocytotic",
+            "im_Metaplastic",
+            "im_Parabasal",
+            "im_Superficial-Intermediate"};
+    String cancerClassName = cancerClasses[maxScoreIdx];
 
     // showing className on UI
     TextView textView = findViewById(R.id.text);
-    textView.setText(className);
+//    textView.setText(className);
+    textView.setText(cancerClassName);
   }
 
   /**
